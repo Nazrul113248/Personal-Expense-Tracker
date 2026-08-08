@@ -7,21 +7,20 @@ import transactionRoutes from '../server/routes/transactions';
 
 const app = express();
 
-// Middleware to restore original request URL on Vercel after internal rewrites
-app.use((req, res, next) => {
-  const matchedPath = req.headers['x-matched-path'] || req.headers['x-vercel-matched-path'];
-  if (matchedPath) {
-    const originalPath = Array.isArray(matchedPath) ? matchedPath[0] : matchedPath;
-    // Keep any existing query parameters from the request
-    const queryIndex = req.url.indexOf('?');
-    const query = queryIndex !== -1 ? req.url.substring(queryIndex) : '';
-    req.url = originalPath + query;
-  }
-  next();
-});
-
 // JSON Body Parser Middleware
 app.use(express.json());
+
+// Diagnostics endpoint to help troubleshoot Vercel routing
+app.get('/api/debug', (req, res) => {
+  res.json({
+    url: req.url,
+    originalUrl: req.originalUrl,
+    headers: req.headers,
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+    }
+  });
+});
 
 // Default and Welcome API endpoints
 app.get('/api', (req, res) => {
@@ -48,6 +47,16 @@ app.use('/user', userRoutes);
 
 app.use('/api/transactions', transactionRoutes);
 app.use('/transactions', transactionRoutes);
+
+// Global Error Handler Middleware
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[API Unhandled Error]:', err);
+  res.status(500).json({
+    message: 'Unhandled API Error',
+    error: err?.message || String(err),
+    stack: err?.stack
+  });
+});
 
 // Export the Express app instance for Vercel Serverless Functions
 export default app;

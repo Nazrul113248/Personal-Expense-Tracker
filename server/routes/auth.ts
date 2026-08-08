@@ -56,9 +56,13 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       },
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Internal server error during registration' });
+    res.status(500).json({ 
+      message: 'Internal server error during registration',
+      error: error?.message || String(error),
+      stack: error?.stack
+    });
   }
 });
 
@@ -96,9 +100,13 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       },
       token,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Internal server error during login' });
+    res.status(500).json({ 
+      message: 'Internal server error during login',
+      error: error?.message || String(error),
+      stack: error?.stack
+    });
   }
 });
 
